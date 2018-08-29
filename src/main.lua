@@ -15,7 +15,6 @@
     levels possible as by having pipes stick out of the ground by varying amounts, acting
     as an infinitely generated obstacle course for the player.
 
-	:octocat:
 ]]
 
 -- virtual resolution handling library
