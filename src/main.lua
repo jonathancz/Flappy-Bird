@@ -23,7 +23,12 @@ push = require 'push'
 -- classic OOP class library
 Class = require 'class'
 
+
+-- bird class
 require 'Bird'
+
+-- pipe class
+require 'Pipe'
 
 -- physical screen dimensions
 WINDOW_WIDTH = 1280
@@ -49,6 +54,10 @@ local GROUND_SCROLL_SPEED = 60
 local BACKGROUND_LOOPING_POINT = 413
 
 local bird = Bird()
+
+local pipes = {}
+
+local spawnTimer = 0
 
 function love.load()
   -- initialize our nearest-neighbor filter
@@ -102,27 +111,48 @@ function love.update(dt)
 	groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
 		% VIRTUAL_WIDTH
 
+	spawnTimer = spawnTimer + dt
+
+	-- spawn a new Pipe if the timer is past 2 seconds
+	if spawnTimer > 2 then
+		table.insert(pipes, Pipe())
+		spawnTimer = 0
+	end
+
+	-- update the bird for input and gravity
 	bird:update(dt)
+
+	-- for every pipe in the scene...
+	for k, pipe in pairs(pipes) do 
+		pipe:update(dt)
+
+		-- if pipe is no longer visible past left edge, remove it from scene
+		if pipe.x < -pipe.width then
+			table.remove(pipes, k)
+		end
+	end
 
 	-- reset input table
 	love.keyboard.keysPressed = {}
 end
 
 function love.draw()
-  push:start()
-  
-  -- draw our images shifted to the left by their looping point; eventually,
-  -- they will revert back to 0 once a certain distance has elapsed, which will make its
-  -- seem as if they are infinitely scrolling. choosing a looping point that is seamless
-  -- is key, so as to provide the illusion of looping
+    push:start()
 
-  -- draw the background at the negative looping point
-  love.graphics.draw(background, -backgroundScroll, 0)
-  
-  -- draw the ground on top of the background, toward the bottom of the screen
-  love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
-  
-  bird:render()
+    -- draw the background at the negative looping point
+    love.graphics.draw(background, -backgroundScroll, 0)
 
-  push:finish()
+    -- render all the pipes in our scene
+    for k, pipe in pairs(pipes) do
+        pipe:render()
+    end
+
+    -- draw the ground on top of the background, toward the bottom of the screen,
+    -- at its negative looping point
+    love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
+
+    -- render our bird to the screen using its own render logic
+    bird:render()
+    
+    push:finish()
 end
