@@ -30,6 +30,9 @@ require 'Bird'
 -- pipe class
 require 'Pipe'
 
+-- class representing pair of pipes together
+require 'PipePair'
+
 -- physical screen dimensions
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -53,11 +56,19 @@ local GROUND_SCROLL_SPEED = 60
 -- point at which we should loop our background back to X 0
 local BACKGROUND_LOOPING_POINT = 413
 
+-- point at which we should loop our ground back to X 0
+local GROUND_LOOPING_POINT = 514
+
+-- our bird Sprite
 local bird = Bird()
 
-local pipes = {}
+local pipePairs = {}
 
+-- our timer for spawning pipes
 local spawnTimer = 0
+
+-- initialize our last recorded Y value for a gap placement to base other gaps off of
+local lastY = -PIPE_HEIGHT + math.random(80) + 20
 
 function love.load()
   -- initialize our nearest-neighbor filter
@@ -103,37 +114,50 @@ function love.keyboard.wasPressed(key)
 end
 
 function love.update(dt)
-	-- scroll background by preset speed * dt, lopping bakc to 0 after the looping point
-	backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
-		% BACKGROUND_LOOPING_POINT
+    -- scroll background by preset speed * dt, looping back to 0 after the looping point
+    backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt) 
+        % BACKGROUND_LOOPING_POINT
 
-	-- scroll ground by preset speed * dt, looping back to 0 after the screen width passes
-	groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
-		% VIRTUAL_WIDTH
+    -- scroll ground by preset speed * dt, looping back to 0 after the screen width passes
+    groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt) 
+        % GROUND_LOOPING_POINT
 
-	spawnTimer = spawnTimer + dt
+    spawnTimer = spawnTimer + dt
 
-	-- spawn a new Pipe if the timer is past 2 seconds
-	if spawnTimer > 2 then
-		table.insert(pipes, Pipe())
-		spawnTimer = 0
-	end
+    -- spawn a new PipePair if the timer is past 2 seconds
+    if spawnTimer > 2 then
+        -- modify the last Y coordinate we placed so pipe gaps aren't too far apart
+        -- no higher than 10 pixels below the top edge of the screen,
+        -- and no lower than a gap length (90 pixels) from the bottom
+        local y = math.max(-PIPE_HEIGHT + 10, 
+            math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
+        lastY = y
+        
+        table.insert(pipePairs, PipePair(y))
+        spawnTimer = 0
+    end
 
-	-- update the bird for input and gravity
-	bird:update(dt)
+    -- update the bird for input and gravity
+    bird:update(dt)
 
-	-- for every pipe in the scene...
-	for k, pipe in pairs(pipes) do 
-		pipe:update(dt)
+    -- for every pipe in the scene...
+    for k, pair in pairs(pipePairs) do
+        pair:update(dt)
+    end
 
-		-- if pipe is no longer visible past left edge, remove it from scene
-		if pipe.x < -pipe.width then
-			table.remove(pipes, k)
-		end
-	end
+    -- remove any flagged pipes
+    -- we need this second loop, rather than deleting in the previous loop, because
+    -- modifying the table in-place without explicit keys will result in skipping the
+    -- next pipe, since all implicit keys (numerical indices) are automatically shifted
+    -- down after a table removal
+    for k, pair in pairs(pipePairs) do
+        if pair.remove then
+            table.remove(pipePairs, k)
+        end
+    end
 
-	-- reset input table
-	love.keyboard.keysPressed = {}
+    -- reset input table
+    love.keyboard.keysPressed = {}
 end
 
 function love.draw()
@@ -142,9 +166,9 @@ function love.draw()
     -- draw the background at the negative looping point
     love.graphics.draw(background, -backgroundScroll, 0)
 
-    -- render all the pipes in our scene
-    for k, pipe in pairs(pipes) do
-        pipe:render()
+    -- render all the pipe pairs in our scene
+    for k, pair in pairs(pipePairs) do
+        pair:render()
     end
 
     -- draw the ground on top of the background, toward the bottom of the screen,
