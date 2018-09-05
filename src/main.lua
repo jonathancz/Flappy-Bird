@@ -23,7 +23,6 @@ push = require 'push'
 -- classic OOP class library
 Class = require 'class'
 
-
 -- bird class
 require 'Bird'
 
@@ -32,6 +31,12 @@ require 'Pipe'
 
 -- class representing pair of pipes together
 require 'PipePair'
+
+-- all code related to game state and state machines
+require 'StateMachine'
+require 'states/BaseState'
+require 'states/PlayState'
+require 'states/TitleScreenState'
 
 -- physical screen dimensions
 WINDOW_WIDTH = 1280
@@ -79,6 +84,14 @@ function love.load()
   
   -- app window title
   love.window.setTitle('Fifty Bird')
+
+  -- initialize our nice-looking retro text fonts
+  smallFont = love.graphics.newFont('font.ttf', 8)
+  mediumFont = love.graphics.newFont('flappy.ttf', 14)
+  flappyFont = love.graphics.newFont('flappy.ttf', 28)
+  hugeFont = love.graphics.newFont('flappy.ttf', 56)
+  love.graphics.setFont(flappyFont)
+
   
   --initialize our virtual resolution 
   push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
@@ -86,6 +99,13 @@ function love.load()
     fullscreen = false,
     resizable = true
   })
+
+  -- initialize state machine with all state-returning functions
+  gStateMachine = StateMachine {
+  	  ['title'] = function() return TitleScreenState() end,
+	  ['play'] = function() return PlayState() end,
+  }
+  gStateMachine:change('title')
 
   love.keyboard.keysPressed = {}
 end
