@@ -65,17 +65,6 @@ local BACKGROUND_LOOPING_POINT = 413
 -- point at which we should loop our ground back to X 0
 local GROUND_LOOPING_POINT = 514
 
--- our bird Sprite
-local bird = Bird()
-
-local pipePairs = {}
-
--- our timer for spawning pipes
-local spawnTimer = 0
-
--- initialize our last recorded Y value for a gap placement to base other gaps off of
-local lastY = -PIPE_HEIGHT + math.random(80) + 20
-
 -- scrolling variable to pause the game when we collide with a pipe
 local scrolling = true
 
@@ -105,6 +94,7 @@ function love.load()
   gStateMachine = StateMachine {
   	  ['title'] = function() return TitleScreenState() end,
 	  ['play'] = function() return PlayState() end,
+	  ['score'] = function() return ScoreState() end
   }
   gStateMachine:change('title')
 
@@ -155,7 +145,7 @@ function love.draw()
 
 	-- draw state machine between the background and ground, which defers
 	-- render logic to the currently active state
-	love.graphics.draw(background, - backgroundScroll, 0)
+	love.graphics.draw(background, -backgroundScroll, 0)
 	gStateMachine:render()
 	love.graphics.draw(ground, - groundScroll, VIRTUAL_HEIGHT - 16)
     
