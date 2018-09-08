@@ -36,6 +36,7 @@ require 'PipePair'
 require 'StateMachine'
 require 'states/BaseState'
 require 'states/PlayState'
+require 'states/ScoreState'
 require 'states/TitleScreenState'
 
 -- physical screen dimensions
