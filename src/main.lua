@@ -32,8 +32,10 @@ require 'Pipe'
 -- class representing pair of pipes together
 require 'PipePair'
 
--- all code related to game state and state machines
+-- a basic StateMachine class which will allow ys to transition to and from
+-- game states smoothly and avoid monolithic code in one file
 require 'StateMachine'
+
 require 'states/BaseState'
 require 'states/CountdownState'
 require 'states/PlayState'
@@ -83,6 +85,20 @@ function love.load()
   hugeFont = love.graphics.newFont('flappy.ttf', 56)
   love.graphics.setFont(flappyFont)
 
+  -- initialize our table of sounds
+  sounds = {
+	['jump'] = love.audio.newSource('jump.wav', 'static'),
+	['explosion'] = love.audio.newSource('explosion.wav', 'static'),
+	['hurt'] = love.audio.newSource('hurt.wav', 'static'),
+	['score'] = love.audio.newSource('score.wav', 'static'),
+
+	-- https://freesound.org/people/xsgianni/sounds/388079/
+	['music'] = love.audio.newSource('marios_way.mp3', 'static')
+  }
+
+  -- kick off music 
+  sounds['music']:setLooping(true)
+  sounds['music']:play()
   
   --initialize our virtual resolution 
   push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
