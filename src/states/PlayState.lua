@@ -102,6 +102,16 @@ function PlayState:update(dt)
 			score = self.score
 		})
     end
+
+	-- reset if we get pass the the top of the screen
+	if self.bird.y < -24	 then
+		sounds['explosion']:play()
+		sounds['hurt']:play()
+
+        gStateMachine:change('score', {
+			score = self.score
+		})
+	end
 end
 
 function PlayState:render()
